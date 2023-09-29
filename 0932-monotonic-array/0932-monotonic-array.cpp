@@ -8,9 +8,9 @@ public:
             if(nums[i]>nums[i-1]) dec = false;
             else if(nums[i]<nums[i-1]) inc = false;
 
-            if(!inc && !dec)return false;
+            if(!inc && !dec)break;
         }
 
-        return true ;
+        return inc||dec ;
     }
 };
