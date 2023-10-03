@@ -1,11 +1,18 @@
 class Solution {
 public:
     int numIdenticalPairs(vector<int>& nums) {
-        int ans = 0;
-        unordered_map<int,int> count;
-        for(int x:nums){
-            ans += count[x]++;
+        std::unordered_map<int, int> count;
+        int result = 0;
+
+        for (int num : nums) {
+            if (count.find(num) != count.end()) {
+                result += count[num];
+                count[num]++;
+            } else {
+                count[num] = 1;
+            }
         }
-        return ans;
+
+        return result;
     }
 };
