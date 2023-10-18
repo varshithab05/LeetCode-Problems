@@ -1,53 +1,80 @@
 class Solution {
+private:
+    vector<int> startNodes;
+    vector<vector<int>> graph;
+    vector<int> time;
+    vector<bool> visited;
+    vector<int> ans;
 public:
-    vector<vector<int>> adjacencyList;  // Adjacency list to represent the course prerequisites
-    vector<int> inDegrees;
+    void toGraph(std::vector<std::vector<int>>& edges, int n) {
+        std::vector<int> incoming(n, 0);
+        std::vector<int> outgoing(n, 0);
 
-    int calculateMinimumTime(int n, vector<int>& time) {
-        vector<int> waitTime(n + 1) ; // keep track of wait time for each course
-        queue<int> q;  // queue for topological sort
-        int maxWaitTime = 0;  // Maximum wait time for completing all courses
+        // Count incoming and outgoing edges for each node.
+        for (std::vector<int> e : edges) {
+            outgoing[e[0] - 1]++;
+            incoming[e[1] - 1]++;
+        }
 
-        // Initialize the queue with courses that have no prerequisites
-        for (int i = 1; i <= n; i++) {
-            if (inDegrees[i] == 0) {
-                q.push(i);
-                waitTime[i] = time[i - 1] ;
-                maxWaitTime = max(maxWaitTime, waitTime[i]);
+        int startCnt = 0;
+
+        // Count the number of starting nodes (nodes with no incoming edges).
+        for (int i : incoming) {
+            if (i == 0) {
+                startCnt++;
             }
         }
 
-        // Perform topological sort
-        while (!q.empty()) {
-            int currentCourse = q.front();
-            q.pop();
+        startNodes = std::vector<int>(startCnt, 0);
 
-            // Process each course that depends on the current course
-            for (auto childCourse : adjacencyList[currentCourse]) {
-                inDegrees[childCourse]--;
-                waitTime[childCourse] = max(time[childCourse - 1] + waitTime[currentCourse], waitTime[childCourse]);
-                maxWaitTime = max(maxWaitTime, waitTime[childCourse]);
-
-                // If all prerequisites are completed, update the wait time and add to the queue
-                if (inDegrees[childCourse] == 0) 
-                    q.push(childCourse);
+        // Populate the starting nodes array.
+        for (int sni = 0, i = 0; sni < startNodes.size(); i++) {
+            if (incoming[i] == 0) {
+                startNodes[sni++] = i;
             }
         }
 
-        return maxWaitTime;
+        // Create the adjacency list graph.
+        graph = std::vector<std::vector<int>>(n);
+
+        // Populate the graph with edges.
+        for (std::vector<int> e : edges) {
+            graph[e[0] - 1].push_back(e[1] - 1);
+        }
     }
 
-    int minimumTime(int n, vector<vector<int>>& relations, vector<int>& time) {
-        adjacencyList.resize(n + 1);
-        inDegrees.resize(n + 1);
-
-        // Build the adjacency list and calculate in-degrees for each course
-        for (int i = 0; i < relations.size(); i++) {
-            auto prerequisitePair = relations[i];
-            adjacencyList[prerequisitePair[0]].push_back(prerequisitePair[1]);
-            inDegrees[prerequisitePair[1]]++;
+    int calculate(int node) {
+        if (ans[node] > 0) {
+            return ans[node];
         }
 
-        return calculateMinimumTime(n, time);
+        int worstPrereq = 0;
+        visited[node] = true;
+
+        // Visit each child (prerequisite) and find the maximum time.
+        for (int child : graph[node]) {
+            if (!visited[child]) {
+                worstPrereq = std::max(calculate(child), worstPrereq);
+            }
+        }
+
+        visited[node] = false;
+
+        // Store the maximum time needed for the current course.
+        return ans[node] = worstPrereq + time[node];
+    }
+
+    int minimumTime(int n, std::vector<std::vector<int>>& relations, std::vector<int>& time) {
+        toGraph(relations, n); // Convert the input relations into a graph.
+        this->time = time;
+        ans = std::vector<int>(n, 0); // Initialize the ans array to store maximum times.
+        visited = std::vector<bool>(n, false); // Initialize the visited array for DFS.
+        int longest = 0;
+
+        // For each starting node (no incoming edges), find the maximum time needed.
+        for (int node : startNodes) {
+            longest = std::max(longest, calculate(node));
+        }
+        return longest;
     }
 };
