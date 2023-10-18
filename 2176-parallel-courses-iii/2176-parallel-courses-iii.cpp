@@ -1,80 +1,40 @@
 class Solution {
-private:
-    vector<int> startNodes;
-    vector<vector<int>> graph;
-    vector<int> time;
-    vector<bool> visited;
-    vector<int> ans;
 public:
-    void toGraph(std::vector<std::vector<int>>& edges, int n) {
-        std::vector<int> incoming(n, 0);
-        std::vector<int> outgoing(n, 0);
+    int minimumTime(int n, vector<vector<int>>& relations, vector<int>& time) {
+        vector<vector<int>> graph(n);
 
-        // Count incoming and outgoing edges for each node.
-        for (std::vector<int> e : edges) {
-            outgoing[e[0] - 1]++;
-            incoming[e[1] - 1]++;
+        for (const vector<int>& relation : relations) {
+            int prev = relation[0] - 1;
+            int next = relation[1] - 1;
+            graph[prev].push_back(next);
         }
 
-        int startCnt = 0;
+        vector<int> memo(n, -1);
 
-        // Count the number of starting nodes (nodes with no incoming edges).
-        for (int i : incoming) {
-            if (i == 0) {
-                startCnt++;
+        function<int(int)> calculateTime = [&](int course) {
+            if (memo[course] != -1) {
+                return memo[course];
             }
-        }
 
-        startNodes = std::vector<int>(startCnt, 0);
-
-        // Populate the starting nodes array.
-        for (int sni = 0, i = 0; sni < startNodes.size(); i++) {
-            if (incoming[i] == 0) {
-                startNodes[sni++] = i;
+            if (graph[course].empty()) {
+                memo[course] = time[course];
+                return memo[course];
             }
-        }
 
-        // Create the adjacency list graph.
-        graph = std::vector<std::vector<int>>(n);
-
-        // Populate the graph with edges.
-        for (std::vector<int> e : edges) {
-            graph[e[0] - 1].push_back(e[1] - 1);
-        }
-    }
-
-    int calculate(int node) {
-        if (ans[node] > 0) {
-            return ans[node];
-        }
-
-        int worstPrereq = 0;
-        visited[node] = true;
-
-        // Visit each child (prerequisite) and find the maximum time.
-        for (int child : graph[node]) {
-            if (!visited[child]) {
-                worstPrereq = std::max(calculate(child), worstPrereq);
+            int maxPrerequisiteTime = 0;
+            for (int prereq : graph[course]) {
+                maxPrerequisiteTime = max(maxPrerequisiteTime, calculateTime(prereq));
             }
+
+            memo[course] = maxPrerequisiteTime + time[course];
+            return memo[course];
+        };
+
+        int overallMinTime = 0;
+        for (int course = 0; course < n; course++) {
+            overallMinTime = max(overallMinTime, calculateTime(course));
         }
 
-        visited[node] = false;
-
-        // Store the maximum time needed for the current course.
-        return ans[node] = worstPrereq + time[node];
-    }
-
-    int minimumTime(int n, std::vector<std::vector<int>>& relations, std::vector<int>& time) {
-        toGraph(relations, n); // Convert the input relations into a graph.
-        this->time = time;
-        ans = std::vector<int>(n, 0); // Initialize the ans array to store maximum times.
-        visited = std::vector<bool>(n, false); // Initialize the visited array for DFS.
-        int longest = 0;
-
-        // For each starting node (no incoming edges), find the maximum time needed.
-        for (int node : startNodes) {
-            longest = std::max(longest, calculate(node));
-        }
-        return longest;
+        return overallMinTime;
     }
 };
