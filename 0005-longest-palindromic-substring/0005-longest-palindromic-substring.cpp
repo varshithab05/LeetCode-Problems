@@ -1,30 +1,32 @@
 class Solution {
 public:
     string longestPalindrome(string s) {
-        string T = "^#";
-        for (char c : s) {
-            T += c;
-            T += '#';
+        string snew = "^#";
+        for(auto c:s){
+            snew+=c;
+            snew+="#";
         }
-        T += "$";
+        snew+= "#$";
 
-        int n = T.size();
-        std::vector<int> P(n, 0);
-        int C = 0, R = 0;
+        int n = snew.size();
+        vector<int> p(n,0);
+        int c = 0 , r = 0;
 
-        for (int i = 1; i < n-1; ++i) {
-            P[i] = (R > i) ? std::min(R - i, P[2*C - i]) : 0;
-            while (T[i + 1 + P[i]] == T[i - 1 - P[i]])
-                P[i]++;
+        for(int i=1;i<n-1;i++){
+            p[i] = (r>i) ? min(r-i,p[2*c-i]):0;
 
-            if (i + P[i] > R) {
-                C = i;
-                R = i + P[i];
+            while(snew[i+1+p[i]]==snew[i-1-p[i]])
+                p[i]++;
+
+            if(i+p[i]>r){
+                c = i;
+                r = i +p[i];
             }
         }
 
-        int max_len = *std::max_element(P.begin(), P.end());
-        int center_index = std::distance(P.begin(), std::find(P.begin(), P.end(), max_len));
-        return s.substr((center_index - max_len) / 2, max_len);
+        int len = *max_element(p.begin(), p.end());
+        int indx = distance(p.begin(),find(p.begin(),p.end(),len));
+
+        return s.substr((indx-len)/2,len);
     }
 };
